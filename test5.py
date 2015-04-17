@@ -12,7 +12,7 @@ class bateau:
             return True
         else:
             return False
-    def compare_pos(self,b1,b2):
+    def compare_position(self,b1,b2):
         if b1._x<b2._x:
             return (b1,b2)
         elif b1._x>b2._x:
@@ -120,16 +120,15 @@ class QuadTree:
                 new._parent=self
             return self._SE
         
-    def fils_unique(self,boat):
+    def freres(self,boat):
         parent=boat._parent
+        nomFrere=[]
         parent_plan=[parent._NO,parent._NE,parent._SO,parent._SE]
-        for i in parent_plan:
-            if isinstance(i,bateau) and i!=boat:
-                return False
-            elif isinstance(i,QuadTree):
-                return False
-            else:
-                return True
+        for i in range(4):
+            if isinstance(parent_plan[i],bateau) and parent_plan[i]!=boat:
+                nomFrere.append(i)
+        return nomFrere
+
         
         
     def divide(self):
@@ -161,14 +160,15 @@ class QuadTree:
             return (position,self,i,g[i],niveau)
             
             
+    def inserer(self,x,y):
+        b=bateau(x,y)
+        self.inserer_bateau(b)
 
+    def inserer_bateau(self,boat):
         
-        
-
-    def inserer(self,boat):
         position,parent,ind,g,niveau=self.trouve(boat._x,boat._y)
         if position==None: #si le quadrant et vide on y place le bateau
-            parent.setQuad(ind,boat)
+            parent.setQuad(ind,boat)               
             self.points.append(boat)
             
         elif isinstance(position,bateau): #si le quadrant est un bateau on transforme
@@ -177,37 +177,50 @@ class QuadTree:
                                       #et fait un appeal recursive pour inserer 'boat'
             temp_bateau = position
             parent.setQuad(ind,QuadTree(g))
-            self.inserer(temp_bateau)
-            self.inserer(boat)
+            self.inserer_bateau(temp_bateau)
+            self.inserer_bateau(boat)
+
+    def collapse(self,qnode,boat=None):
+        parent=qnode._parent
+        if parent!=None:
+            parent_plan=[parent._NO,parent._NE,parent._SO,parent._SE]
+            for i in range(4):
+                if parent_plan[i]==qnode:
+                    ind=i
+                    parent.setQuad(i,boat)
+                    nomFrere=self.freres(boat)
+                    if len(nomFrere)==0:
+                        self.collapse(parent,boat)
 
 
     def enlever(self,x,y):
-        existe=False
-        for i in self.points:
-            if i.is_equal(x,y):
-                boat=i
-                parent=boat._parent
-                existe =True
-                break
-        if existe==False:
-            return "bateau n'existe pas"
-        else:
-            plan=[parent._NO,parent._NE,parent._SO,parent._SE]
-            print(parent.frontiere())
-            for i in range(4):
-                if plan[i]==boat:
-                    ind=i
-            if self.fils_unique(boat)==False:
-                self.points.remove(boat)
-                parent.setQuad(ind,None)
-            else:
-                self.points.remove(boat)
-                parent.setQuad(ind,boat)
-                if self.fils_unique(parent):
-                    self.enlever(parent)
-                               
-        
+        b=bateau(x,y)
+        self.enlever_bateau(b)
+    def enlever_bateau(self,boat):
+        position,parent,ind,g,niveau=self.trouve(boat._x,boat._y)
+        if position==None:
+            return None
+        elif position._x==boat._x and position._y==boat._y:
+            nomFrere=self.freres(position)
+            if len(nomFrere)<=1:
+                if len(nomFrere)==1:
+                    seul=parent.quad(nomFrere[0])
+                    parent.setQuad(ind,None)
+                    self.collapse(parent,seul)
+                else:
+                    parent.setQuad(ind,None)
+                    self.collapse(parent,position)
+                
 
+            else:
+                parent.setQuad(ind,None) 
+                
+                
+                
+
+
+
+        
 def PrintT(tree,niveau,init=0,carte=None):
     if carte==None:
         carte=[]
@@ -234,58 +247,37 @@ def PrintT(tree,niveau,init=0,carte=None):
 
 
 
-##test = QuadTree()
-##test.inserer(bateau(6000,60))
-##PrintT(test,0)
-##PrintT(test,1)
-##test.inserer(bateau(100,1000))
-##PrintT(test,0)
-##PrintT(test,1)
-##test.inserer(bateau(100,6000))
-##PrintT(test,0)
-##PrintT(test,1)
-##test.inserer(bateau(6000,6000))
-##PrintT(test,0)
-##PrintT(test,1)
-##test.inserer(bateau(7000,7000))
-##PrintT(test,0)
-##PrintT(test,1)
-##PrintT(test,3)
-
 test = QuadTree()
-test.inserer(bateau(6000,60))
+test.inserer(6000,60)
+test.inserer(1000,1000)
+test.inserer(2,3)
+test.inserer(18,14)
+test.inserer(15,16)
+print("0: ")
 PrintT(test,0)
-test.inserer(bateau(1000,1000))
+print("1: ")
 PrintT(test,1)
-test.inserer(bateau(2,3))
-print("niveau 4")
+print("2: ")
+PrintT(test,2)
+print("4: ")
 PrintT(test,4)
-test.inserer(bateau(18,14))
-PrintT(test,4)
+print("10: ")
 PrintT(test,10)
-test.inserer(bateau(15,16))
-PrintT(test,4)
-PrintT(test,10)
+print("11: ")
 PrintT(test,11)
+test.enlever(15,16)
+test.enlever(2,3)
+test.enlever(18,14)
+test.enlever(1000,1000)
+test.enlever(6000,60)
+print("0: ")
+PrintT(test,0)
+print("1: ")
+PrintT(test,1)
 
-
-##PrintT(test,2)
-##test.inserer(bateau(13,12))
-##print('siiii')
-##PrintT(test,0)
-##PrintT(test,1)
-##PrintT(test,2)
-##print('4')
-##PrintT(test,4)
-##PrintT(test,5)
-##print('10')
-##PrintT(test,10)
-##PrintT(test,11)
-##PrintT(test,12)
-##print(test.trouve(1000,1000))
-##test.enlever(13,12)
 ##
-##PrintT(test,3)
+##PrintT(test,3)test.enlever(1000,1000)
+
 ##PrintT(test,2)
 ##test.enlever(100,1000)
 ##PrintT(test,3)
