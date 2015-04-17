@@ -12,6 +12,16 @@ class bateau:
             return True
         else:
             return False
+    def compare_pos(self,b1,b2):
+        if b1._x<b2._x:
+            return (b1,b2)
+        elif b1._x>b2._x:
+            return (b2,b1)
+        elif b1._x==b2._x:
+            if b1._y<b2._y:
+                return (b1,b2)
+        elif b1._y>b2._y:
+            return (b2,b1)
 
 class QuadTree:
     
@@ -31,9 +41,12 @@ class QuadTree:
         def contains(self,bateau):
             """évalue si la grille contient les coordonnées du bateau
             """
+
             if self._x1<bateau._x and self._x2>bateau._x:
                 if self._y1<bateau._y and self._y2>bateau._y:
                     return True
+                else:
+                    return False
             else:
                 return False
     points=[]
@@ -123,48 +136,50 @@ class QuadTree:
         """
         divide en quatre la grille et assigne les parties à chaque quadrant
         """
-        gNO=self.grille(self._grille[0],self._grille[1],(self._grille[2])/2,(self._grille[3])/2)
-        gNE=self.grille((self._grille[2])/2,self._grille[1],self._grille[2],(self._grille[3])/2)
-        gSO=self.grille(self._grille[2],(self._grille[3])/2,(self._grille[2])/2,self._grille[3])
-        gSE=self.grille((self._grille[2])/2,(self._grille[3])/2,self._grille[2],self._grille[3])
+        x1,y1,x2,y2=self._grille
+        gNO=self.grille(x1,y1,x1+(x2-x1)/2,y1+(y2-y1)/2)
+        gNE=self.grille((x2-x1)/2+x1,y1,x2,y1+(y2-y1)/2)
+        gSO=self.grille(x1,y1+(y2-y1)/2,x1+(x2-x1)/2,y2)
+        gSE=self.grille((x2-x1)/2+x1,y1+(y2-y1)/2,x2,y2)
         
         return [gNO,gNE,gSO,gSE]
 
-    def inserer(self,boat):
-        plan=[self._NO,self._NE,self._SO,self._SE]
-        grilles=self.divide() #divise la grille du présent quadrant
+    def trouve(self,x,y,niveau=0):
+        boat=bateau(x,y)
+        g=self.divide() #divise la grille du présent quadrant
+        niveau+=1
         for i in range(4):
-            if grilles[i].contains(boat):
-                ind=i
-                quad=self.quad(ind)
+            if g[i].contains(boat):
+                position=self.quad(i) #quadrant qui contient les coordones du bateau
                 break
-        if quad==None: #si le quadrant et vide on y place le bateau
-            self.setQuad(ind,boat)
+            
+        if isinstance(position,QuadTree):
+            position=position.trouve(x,y,niveau)
+            return position
+        else:
+
+            return (position,self,i,g[i],niveau)
+            
+            
+
+        
+        
+
+    def inserer(self,boat):
+        position,parent,ind,g,niveau=self.trouve(boat._x,boat._y)
+        if position==None: #si le quadrant et vide on y place le bateau
+            parent.setQuad(ind,boat)
             self.points.append(boat)
-        elif isinstance(quad,bateau): #si le quadrant est un bateau on transforme
+            
+        elif isinstance(position,bateau): #si le quadrant est un bateau on transforme
                                       #le quadrant dans une QuadTree pour mets le
                                       #son vieux bateau dans le prémier quadrant
                                       #et fait un appeal recursive pour inserer 'boat'
-            temp_bateau = quad
-            self.setQuad(ind,QuadTree(grilles[ind]))._NO=temp_bateau
+            temp_bateau = position
+            parent.setQuad(ind,QuadTree(g))
+            self.inserer(temp_bateau)
             self.inserer(boat)
-        elif isinstance(quad,QuadTree):
-            nomBoat=0
-            for j in range(1,4):       #si le quadrant est un QuadTree on met le bateau
-                                       #dans un de ses quadrants vides.
-                ind2=j
-                quad2=quad.quad(j)
-                if quad2==None:
-                    quad.setQuad(ind2,boat)
-                    self.points.append(boat)
-                    break
-                nomBoat+=1
-            if nomBoat==3:             #Sinon on transforme son prémier quadrant dans un
-                                       #QuadTree pour insérer son vieux bateau et on appele
-                                       #inserer(...) pour 'boat
-                temp_bateau = quad._NO
-                quad.setQuad(ind,QuadTree(grilles[ind]))._NO=temp_bateau
-                quad.inserer(boat)
+
 
     def enlever(self,x,y):
         existe=False
@@ -217,17 +232,57 @@ def PrintT(tree,niveau,init=0,carte=None):
                 print(' '.join('{}'.format(i) for i in carte))
     
 
+
+
+##test = QuadTree()
+##test.inserer(bateau(6000,60))
+##PrintT(test,0)
+##PrintT(test,1)
+##test.inserer(bateau(100,1000))
+##PrintT(test,0)
+##PrintT(test,1)
+##test.inserer(bateau(100,6000))
+##PrintT(test,0)
+##PrintT(test,1)
+##test.inserer(bateau(6000,6000))
+##PrintT(test,0)
+##PrintT(test,1)
+##test.inserer(bateau(7000,7000))
+##PrintT(test,0)
+##PrintT(test,1)
+##PrintT(test,3)
+
 test = QuadTree()
 test.inserer(bateau(6000,60))
-test.inserer(bateau(100,1000))
-test.inserer(bateau(2,3))
-test.inserer(bateau(18,14))
-test.inserer(bateau(15,16))
-test.inserer(bateau(13,12))
 PrintT(test,0)
+test.inserer(bateau(1000,1000))
 PrintT(test,1)
-PrintT(test,2)
-PrintT(test,3)
+test.inserer(bateau(2,3))
+print("niveau 4")
+PrintT(test,4)
+test.inserer(bateau(18,14))
+PrintT(test,4)
+PrintT(test,10)
+test.inserer(bateau(15,16))
+PrintT(test,4)
+PrintT(test,10)
+PrintT(test,11)
+
+
+##PrintT(test,2)
+##test.inserer(bateau(13,12))
+##print('siiii')
+##PrintT(test,0)
+##PrintT(test,1)
+##PrintT(test,2)
+##print('4')
+##PrintT(test,4)
+##PrintT(test,5)
+##print('10')
+##PrintT(test,10)
+##PrintT(test,11)
+##PrintT(test,12)
+##print(test.trouve(1000,1000))
 ##test.enlever(13,12)
 ##
 ##PrintT(test,3)
