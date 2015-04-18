@@ -256,33 +256,6 @@ class QuadTree:
         s=coller.split(";")
         print("\n".join(s))
 
-        
-
-def PrintT(tree,niveau,init=0,carte=None):
-    if carte==None:
-        carte=[]
-    if(tree==None):
-        carte.append("None")
-    elif(init==niveau):
-        if isinstance(tree,bateau):
-            carte.append(tree.coord())
-        else:
-            carte.append(tree.frontiere())
-        if niveau==0:
-            print(' '.join('{}'.format(i) for i in carte))
-    else:
-        if isinstance(tree,bateau):
-            carte.append(tree.coord())
-        else:
-            PrintT(tree._NO,niveau,init+1,carte)
-            PrintT(tree._NE,niveau,init+1,carte)
-            PrintT(tree._SO,niveau,init+1,carte)
-            PrintT(tree._SE,niveau,init+1,carte)
-            if init==niveau-1:
-                print(' '.join('{}'.format(i) for i in carte))
-    
-
-
 
 test = QuadTree()
 test.inserer(6000,60)
