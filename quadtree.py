@@ -177,7 +177,7 @@ class QuadTree:
 
         if position==None: #si la position et vide on y place le bateau
             parent.setQuad(ind,boat)               
-            self.bateaux.append((boat._x,boat._y))
+            self.bateaux.append(boat)
             
         elif isinstance(position,bateau): #si la position est un bateau on transforme
                                       #le quadrant(position) dans une QuadTree et
@@ -223,29 +223,31 @@ class QuadTree:
                                      #sous-arbre
                     seul=parent.quad(nomFrere[0])
                     parent.setQuad(ind,None)
-                    
+                    self.list_bateaux()
+                    print(boat._x,boat._y)
+                    print(self.bateaux)
+                    self.bateaux.remove(boat)
                     self.collapse(parent,seul)
                 else: #position va prendre None comme valeur et on collapse
                     parent.setQuad(ind,None)
-                    
+                    self.list_bateaux()
+                    print(boat._x,boat._y)
+                    print(self.bateaux)
+                    self.bateaux.remove(boat)
                     self.collapse(parent,position)
             else: #si le bateau a plus qu'un frère on ne collapse pas le sous-
                   #arbre
                 parent.setQuad(ind,None)
 
-    def zone_destruction(self,bombe):
+    def zone_destruction(self,bombes):
         it=list(set(self.bateaux))
-        x1,y1,x2,y2=bombe
+        x1,y1,x2,y2=bombes
         zone=self.grille(x1,y1,x2,y2)
         detruits=[]
         for i in it:
             if zone.contains(i):
-                detruit.append(i)
+                detruits.append(i)
         return detruits
-    
-        
-        
-        
 
     def Afficher(self):
         """
@@ -286,21 +288,50 @@ class QuadTree:
         s=coller.split(";")
         print("\n".join(s))
 
-content=[]
-with open('positionDesBateaux.txt') as f:
-    for line in f:
-        split=line.split()
-        pair = [ int(x) for x in split ]
-        tup=tuple(pair)
-        content.append(tup)
-tree=QuadTree()
-for i in content:
-    tree.inserer(i)
+class Jeu:
 
-tree.Afficher()
-tree.list_bateaux()
-print(tree.bateaux)
-##test.enlever(15,16)
+    ocean=QuadTree()
+    def placer_bateaux(self,fichier):
+        bateaux=[]
+        with open(fichier) as f:
+            for line in f:
+                split=line.split()
+                pair = [ int(x) for x in split ]
+                tup=tuple(pair)
+                bateaux.append(tup)
+        for i in bateaux:
+            self.ocean.inserer(i)
+
+    def carte(self):
+        self.ocean.Afficher()
+    def attaque(self,fichier):
+        bombes=[]
+        with open('bombes.txt') as f:
+            for line in f:
+                split=line.split()
+                s=' '.join(split).split('.')
+                coord = [ int(x) for x in s]
+                tup=tuple(coord)
+                bombes.append(tup)
+        print(bombes)
+        for i in bombes:
+            zone=self.ocean.zone_destruction(i)
+            for z in zone:
+                self.ocean.enlever((z._x,z._y))
+    
+j=Jeu()
+j.placer_bateaux('positionDesBateaux.txt')
+j.carte()
+j.attaque('bombes.txt')
+
+
+##
+##tree.list_bateaux()
+##print(tree.bateaux)
+##
+##tree.enlever((15,16))
+##tree.Afficher()
+##print(tree.bateaux)
 ##test.enlever(2,3)
 ##test.enlever(18,14)
 ##test.enlever(1000,1000)
