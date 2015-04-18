@@ -1,4 +1,5 @@
-
+import copy
+import queue
 class bateau:
     """bateau représenté par les coordonnées x et y"""
     def __init__(self,x,y,parent=None):
@@ -12,16 +13,6 @@ class bateau:
             return True
         else:
             return False
-    def compare_position(self,b1,b2):
-        if b1._x<b2._x:
-            return (b1,b2)
-        elif b1._x>b2._x:
-            return (b2,b1)
-        elif b1._x==b2._x:
-            if b1._y<b2._y:
-                return (b1,b2)
-        elif b1._y>b2._y:
-            return (b2,b1)
 
 class QuadTree:
     
@@ -163,7 +154,6 @@ class QuadTree:
     def inserer(self,x,y):
         b=bateau(x,y)
         self.inserer_bateau(b)
-
     def inserer_bateau(self,boat):
         
         position,parent,ind,g,niveau=self.trouve(boat._x,boat._y)
@@ -213,14 +203,36 @@ class QuadTree:
                 
 
             else:
-                parent.setQuad(ind,None) 
-                
-                
-                
+                parent.setQuad(ind,None)
 
-
+    def Afficher(self):
+        q=queue.Queue()
+        q.put(copy.copy(self))
+        carte=[]
+        ligne=[]
+        while q.empty()==False:
+            tree=q.get()
+            if tree==None:
+                carte.append('None')
+            elif isinstance(tree,bateau):
+                carte.append(tree.coord())
+            else:
+                if isinstance(tree,str):
+                    carte.append(tree)
+                elif isinstance(tree,QuadTree):
+                    
+                    carte.append(tree.frontiere())
+                    q.put(";")
+                    q.put(tree._NO)
+                    q.put(tree._NE)
+                    q.put(tree._SO)
+                    q.put(tree._SE)
+        coller = " ".join(carte)
+        s=coller.split(";")
+        print("\n".join(s))
 
         
+
 def PrintT(tree,niveau,init=0,carte=None):
     if carte==None:
         carte=[]
@@ -250,44 +262,36 @@ def PrintT(tree,niveau,init=0,carte=None):
 test = QuadTree()
 test.inserer(6000,60)
 test.inserer(1000,1000)
-test.inserer(2,3)
 test.inserer(18,14)
+test.inserer(2,3)
 test.inserer(15,16)
-print("0: ")
-PrintT(test,0)
-print("1: ")
-PrintT(test,1)
-print("2: ")
-PrintT(test,2)
-print("4: ")
-PrintT(test,4)
-print("10: ")
-PrintT(test,10)
-print("11: ")
-PrintT(test,11)
-test.enlever(15,16)
-test.enlever(2,3)
-test.enlever(18,14)
-test.enlever(1000,1000)
-test.enlever(6000,60)
-print("0: ")
-PrintT(test,0)
-print("1: ")
-PrintT(test,1)
+test.Afficher()
 
+
+
+##test.enlever(15,16)
 ##
-##PrintT(test,3)test.enlever(1000,1000)
+##test.enlever(2,3)
+##test.enlever(18,14)
+##
+##test.enlever(1000,1000)
+##test.enlever(6000,60)
 
+
+
+##print("0: ")
+##PrintT(test,0)
+##print("1: ")
+##PrintT(test,1)
+##print("2: ")
 ##PrintT(test,2)
-##test.enlever(100,1000)
+##print("3: ")
 ##PrintT(test,3)
-##PrintT(test,2)
-
-
-
-
-##test.inserer(bateau(2,3))
-##test.inserer(bateau(100,1000))
-##test.inserer(bateau(18,14))
+##print("4: ")
+##PrintT(test,4)
+##print("10: ")
+##PrintT(test,10)
+##print("11: ")
+##PrintT(test,11)
 
 
