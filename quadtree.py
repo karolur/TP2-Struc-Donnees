@@ -40,7 +40,11 @@ class QuadTree:
                     return False
             else:
                 return False
-    points=[]
+    def list_bateaux(self):
+        b=list(set(self.bateaux))
+        self.bateaux=b
+        return b
+    bateaux=[]
 
     #constructor
     def __init__(self,grille=grille(), parent=None, NO=None, NE=None, SO=None,SE=None):
@@ -161,8 +165,8 @@ class QuadTree:
             return (position,self,i,g[i],niveau)
             
             
-    def inserer(self,x,y):
-        b=bateau(x,y)
+    def inserer(self,tup):
+        b=bateau(tup[0],tup[1])
         self.inserer_bateau(b)
     def inserer_bateau(self,boat):
         """
@@ -173,7 +177,7 @@ class QuadTree:
 
         if position==None: #si la position et vide on y place le bateau
             parent.setQuad(ind,boat)               
-            self.points.append(boat)
+            self.bateaux.append((boat._x,boat._y))
             
         elif isinstance(position,bateau): #si la position est un bateau on transforme
                                       #le quadrant(position) dans une QuadTree et
@@ -197,8 +201,8 @@ class QuadTree:
                         self.collapse(parent,boat)
 
 
-    def enlever(self,x,y):
-        b=bateau(x,y)
+    def enlever(self,tup):
+        b=bateau(tup[0],tup[1])
         self.enlever_bateau(b)
     def enlever_bateau(self,boat):
         """
@@ -219,13 +223,29 @@ class QuadTree:
                                      #sous-arbre
                     seul=parent.quad(nomFrere[0])
                     parent.setQuad(ind,None)
+                    
                     self.collapse(parent,seul)
                 else: #position va prendre None comme valeur et on collapse
                     parent.setQuad(ind,None)
+                    
                     self.collapse(parent,position)
             else: #si le bateau a plus qu'un frère on ne collapse pas le sous-
                   #arbre
                 parent.setQuad(ind,None)
+
+    def zone_destruction(self,bombe):
+        it=list(set(self.bateaux))
+        x1,y1,x2,y2=bombe
+        zone=self.grille(x1,y1,x2,y2)
+        detruits=[]
+        for i in it:
+            if zone.contains(i):
+                detruit.append(i)
+        return detruits
+    
+        
+        
+        
 
     def Afficher(self):
         """
@@ -234,20 +254,30 @@ class QuadTree:
         q=queue.Queue()
         q.put(copy.copy(self))
         carte=[]
-        ligne=[]
+        enf=0
+        ind=0
         while q.empty()==False:
             tree=q.get()
             if tree==None:
-                carte.append('None')
+                carte.append('n')
             elif isinstance(tree,bateau):
                 carte.append(tree.coord())
+                ind+=1
             else:
                 if isinstance(tree,str):
                     carte.append(tree)
                 elif isinstance(tree,QuadTree):
-                    
                     carte.append(tree.frontiere())
-                    q.put(";")
+                    
+                    if enf==ind:
+                        q.put(";")
+                        enf=0
+                        ind=0
+                    
+                    ind+=1
+                    for i in [tree._NO,tree._NE,tree._SO,tree._SE]:
+                        if i!=None:
+                            enf+=1
                     q.put(tree._NO)
                     q.put(tree._NE)
                     q.put(tree._SO)
@@ -256,14 +286,40 @@ class QuadTree:
         s=coller.split(";")
         print("\n".join(s))
 
+content=[]
+with open('positionDesBateaux.txt') as f:
+    for line in f:
+        split=line.split()
+        pair = [ int(x) for x in split ]
+        tup=tuple(pair)
+        content.append(tup)
+tree=QuadTree()
+for i in content:
+    tree.inserer(i)
 
-test = QuadTree()
-test.inserer(6000,60)
-test.inserer(1000,1000)
-test.inserer(18,14)
-test.inserer(2,3)
-test.inserer(15,16)
-test.Afficher()
+tree.Afficher()
+tree.list_bateaux()
+print(tree.bateaux)
+##test.enlever(15,16)
+##test.enlever(2,3)
+##test.enlever(18,14)
+##test.enlever(1000,1000)
+##test.enlever(6000,60)
+##tree.Afficher()
+
+##tree.zone_destruction((6,4,3,5))
+
+
+
+##test = QuadTree()
+
+##test.inserer(6000,60)
+##test.inserer(1000,1000)f
+##test.inserer(18,14)
+##test.inserer(2,3)
+##test.inserer(15,16)
+####test.inserer(7000,100)
+##test.Afficher()
 
 
 
